@@ -12,9 +12,13 @@ use opengl_graphics::{ GlGraphics, OpenGL };
 mod block;
 mod board;
 
+use board::Board;
+
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    rotation: f64   // Rotation for the square.
+    rotation: f64,   // Rotation for the square.
+
+    board: board::Board // the game board
 }
 
 impl App {
@@ -46,6 +50,10 @@ impl App {
         // Rotate 2 radians per second.
         self.rotation += 2.0 * args.dt;
     }
+
+    fn handle_input(&mut self, inp: Input) {
+        self.board.handle_key_press(inp);
+    }
 }
 
 fn main() {
@@ -54,8 +62,8 @@ fn main() {
 
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
-            "spinning-square",
-            [200, 200]
+            "t e t r i s",
+            [400, 700]
         )
         .opengl(opengl)
         .exit_on_esc(true)
@@ -65,7 +73,8 @@ fn main() {
     // Create a new game and run it.
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        rotation: 0.0
+        rotation: 0.0,
+        board: Board::init_board()
     };
 
     let mut events = window.events();
@@ -77,5 +86,25 @@ fn main() {
         if let Some(u) = e.update_args() {
             app.update(&u);
         }
+
+        if let Event::Input(i) = e {
+            app.handle_input(i);
+        }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
