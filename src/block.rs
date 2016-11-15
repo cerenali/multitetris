@@ -1,3 +1,6 @@
+use std::result;
+pub type Result<T> = result::Result<T, String>;
+
 pub static blocks: [[[u8; 4]; 4]; 7] = [
         [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
         [[0, 1, 0, 0], [0, 1, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
@@ -13,7 +16,7 @@ pub struct Tetromino {
 }
 
 impl Tetromino {
-    pub fn rotate(self) -> Tetromino {
+    pub fn rotate(&mut self) -> Result<()> {
         let mut new_blocks = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
 
         for (r, row) in self.blocks.iter().enumerate() {
@@ -22,8 +25,11 @@ impl Tetromino {
             }
         }
 
-        Tetromino {
-            blocks: new_blocks
-        }
+        self.blocks = new_blocks;
+        Ok(())
+    }
+
+    pub fn move_down(&mut self) -> Result<()> {
+        Ok(())
     }
 }

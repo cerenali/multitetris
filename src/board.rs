@@ -56,9 +56,9 @@ impl Board {
         Ok(true)
     }
 
-    pub fn advance_board(self) -> Result<()> {
+    pub fn advance_board(&mut self) -> Result<()> {
         // make the existing piece fall
-        // handle user input ?? / keyboard controls
+        // if it's done (reached bottom), spawn a new one (get_next_piece)
         Ok(())
     }
 
