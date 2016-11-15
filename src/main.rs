@@ -50,10 +50,6 @@ impl App {
         // Rotate 2 radians per second.
         self.rotation += 2.0 * args.dt;
     }
-
-    fn handle_input(&mut self, inp: Input) {
-        self.board.handle_key_press(inp);
-    }
 }
 
 fn main() {
@@ -88,7 +84,7 @@ fn main() {
         }
 
         if let Event::Input(i) = e {
-            app.handle_input(i);
+            app.board.handle_key_press(i);
         }
     }
 }
