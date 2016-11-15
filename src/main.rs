@@ -9,6 +9,8 @@ use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
 
+mod block;
+
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     rotation: f64   // Rotation for the square.
