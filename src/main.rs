@@ -10,6 +10,7 @@ use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
 
 mod block;
+mod board;
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
