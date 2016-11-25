@@ -12,7 +12,9 @@ pub static blocks: [[[u8; 4]; 4]; 7] = [
 ];
 
 pub struct Tetromino {
-    pub blocks: [[u8; 4]; 4]
+    pub blocks: [[u8; 4]; 4],
+    pub x: f64, // col
+    pub y: f64 // row
 }
 
 impl Tetromino {
@@ -29,7 +31,21 @@ impl Tetromino {
         Ok(())
     }
 
-    pub fn move_down(&mut self) -> Result<()> {
-        Ok(())
+    pub fn block_height(&self) -> f64 {
+        let mut height = 0.0;
+        for (r, row) in self.blocks.iter().enumerate() {
+            for (c, col) in row.iter().enumerate() {
+                if self.blocks[r][c] == 1 {
+                    height += 1.0;
+                    continue;
+                }
+            }
+        }
+
+        height
+    }
+
+    pub fn move_down(&mut self) {
+        self.y += 0.1;
     }
 }
