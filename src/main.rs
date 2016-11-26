@@ -34,13 +34,16 @@ pub struct App {
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
-        // self.board.draw_board();
-
+        if self.board.state != board::GameState::Continue {
+            return
+        }
         let cells = self.board.cells;
         
         let blocks = self.board.current_piece.blocks;
-        let current_x = self.board.current_piece.x;
-        let current_y = self.board.current_piece.y;
+        // let current_x = self.board.current_piece.x;
+        // let current_y = self.board.current_piece.y;
+        let current_x = self.board.current_piece.leftmost();
+        let current_y = self.board.current_piece.topmost();
 
         // let square = rectangle::square(0.0, 0.0, 50.0);
         // let rotation = self.rotation;
@@ -91,6 +94,8 @@ impl App {
             // // Draw a box rotating around the middle of the screen.
             // rectangle(RED, square, transform, gl);
         });
+
+        
     }
 
     fn update(&mut self, args: &UpdateArgs) {
