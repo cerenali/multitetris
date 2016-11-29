@@ -1,5 +1,7 @@
 use std::result;
 use super::BLOCK_SIZE;
+use super::BOARD_WIDTH;
+use super::BOARD_HEIGHT;
 
 pub type Result<T> = result::Result<T, String>;
 
@@ -9,43 +11,43 @@ pub static TETROMINOES: [Tetromino; 7] = [
     Tetromino {
         name: Shape::I,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::J,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::L,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::O,
         blocks: [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 1.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::S,
         blocks: [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::T,
         blocks: [[0, 0, 0, 0], [1, 1, 1, 0], [0, 1, 0, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },
     Tetromino {
         name: Shape::Z,
         blocks: [[0, 0, 0, 0], [1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0]],
-        x_offset: 0.0,
+        x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
         y_offset: 0.0
     },  
 ];
