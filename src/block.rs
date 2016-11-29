@@ -1,11 +1,10 @@
 use std::result;
-use super::BLOCK_SIZE;
 use super::BOARD_WIDTH;
 use super::BOARD_HEIGHT;
 
 pub type Result<T> = result::Result<T, String>;
 
-const movement_speed: f64 = 1.0;
+const MOVEMENT_SPEED: f64 = 1.0;
 
 pub static TETROMINOS: [Tetromino; 7] = [
     Tetromino {
@@ -177,14 +176,14 @@ impl Tetromino {
     }
 
     pub fn move_down(&mut self) {
-        self.y_offset += movement_speed;
+        self.y_offset += MOVEMENT_SPEED;
     }
 
     pub fn move_left(&mut self) {
-        self.x_offset -= movement_speed;
+        self.x_offset -= MOVEMENT_SPEED;
     }
 
     pub fn move_right(&mut self) {
-        self.x_offset += movement_speed;
+        self.x_offset += MOVEMENT_SPEED;
     }
 }
