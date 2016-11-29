@@ -59,7 +59,10 @@ impl Board {
                         }
                     }
                     Button::Keyboard(Key::Down) => {
-                        // TODO: drop piece to bottom?
+                        // pressing down drops piece to bottom
+                        while self.can_move_current_piece_down() {
+                            self.current_piece.move_down();
+                        }
                     }
                     Button::Keyboard(Key::Left) => {
                         if self.can_move_current_piece_left() {
