@@ -17,9 +17,9 @@ mod board;
 
 use board::Board;
 
-pub const BLOCK_SIZE: f64 = 30.0;
-pub const BOARD_WIDTH: u32 = 10; // 10 cells across
-pub const BOARD_HEIGHT: u32 = 22; // 22 cells up n down
+pub const BLOCK_SIZE: i64 = 30;
+pub const BOARD_WIDTH: i64 = 10; // 10 cells across
+pub const BOARD_HEIGHT: i64 = 22; // 22 cells up n down
 
 pub const BOARD_BKD_COLOR: [f32; 4] = [0.18, 0.18, 0.18, 1.0]; // dark gray
 pub const RED: [f32; 4] = [0.96, 0.12, 0.12, 1.0];
@@ -62,24 +62,26 @@ impl App {
 
             // draw board???
             // iterate thru board cells and draw in filled-in blocks
-            for (r, row) in cells.iter().enumerate() {
-                for (col, colblock) in row.iter().enumerate() {
-                    if *colblock == 1 {
+            for row in 0..cells.len() {
+                for col in 0..cells[0].len() {
+                    if cells[row][col] == 1 {
                         let x: f64 = col as f64;
-                        let y: f64 = r as f64;
-                        let b = rectangle::square(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE);
+                        let y: f64 = row as f64;
+                        let size: f64 = BLOCK_SIZE as f64;
+                        let b = rectangle::square(x * size, y * size, size);
                         rectangle(WHITE, b, c.transform.trans(0.0, 0.0), gl);
                     }
                 }
             }
 
             // iterate thru current piece and draw its current location
-            for (r, row) in blocks.iter().enumerate() {
-                for (col, colblock) in row.iter().enumerate() {
-                    if *colblock == 1 {
-                        let x: f64 = (col as f64) + (current_x as f64);
-                        let y: f64 = (r as f64) + (current_y as f64);
-                        let b = rectangle::square(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE);
+            for row in 0..blocks.len() {
+                for col in 0..blocks[0].len() {
+                    if blocks[row][col] == 1 {
+                        let x: f64 = (col as f64) + current_x;
+                        let y: f64 = (row as f64) + current_y;
+                        let size: f64 = BLOCK_SIZE as f64;
+                        let b = rectangle::square(x * size, y * size, size);
                         rectangle(piece_color, b, c.transform.trans(0.0, 0.0), gl);
                     }
                 }
@@ -102,7 +104,7 @@ fn main() {
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
             "t e t r i s",
-            [(BLOCK_SIZE as u32) * BOARD_WIDTH, (BLOCK_SIZE as u32) * BOARD_HEIGHT]
+            [(BLOCK_SIZE * BOARD_WIDTH) as u32, (BLOCK_SIZE * BOARD_HEIGHT) as u32]
         )
         .opengl(opengl)
         .exit_on_esc(true)

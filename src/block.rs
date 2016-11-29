@@ -1,6 +1,5 @@
 use std::result;
 use super::BOARD_WIDTH;
-use super::BOARD_HEIGHT;
 
 pub type Result<T> = result::Result<T, String>;
 
@@ -84,8 +83,8 @@ impl Tetromino {
             return
         }
         let mut new_blocks = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 new_blocks[r][c] = self.blocks[4 - c - 1][r];
             }
         }
@@ -97,20 +96,18 @@ impl Tetromino {
             return
         }
         let mut new_blocks = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]];
-
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 new_blocks[r][c] = self.blocks[c][4 - r - 1];
             }
         }
-
         self.blocks = new_blocks;
     }
 
     pub fn block_height(&self) -> f64 {
         let mut height = 0.0;
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 if self.blocks[r][c] == 1 {
                     height += 1.0;
                     break;
@@ -122,8 +119,8 @@ impl Tetromino {
 
     pub fn block_width(&self) -> f64 {
         let mut cols_vec: [i64; 4] = [0, 0, 0, 0];
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 if self.blocks[r][c] == 1 {
                     cols_vec[c] = 1;
                 }
@@ -141,8 +138,8 @@ impl Tetromino {
     // coordinates of leftmost point in block
     pub fn leftmost(&self) -> f64 {
         let mut leftmost = 3.0;
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 if self.blocks[r][c] == 1 {
                     if leftmost > c as f64 {
                         leftmost = c as f64;
@@ -159,8 +156,8 @@ impl Tetromino {
 
     pub fn topmost(&self) -> f64 {
         let mut topmost = 3.0;
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
+        for r in 0..self.blocks.len() {
+            for c in 0..self.blocks[0].len() {
                 if self.blocks[r][c] == 1 {
                     if topmost > r as f64 {
                         topmost = r as f64;
