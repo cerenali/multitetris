@@ -7,7 +7,7 @@ pub type Result<T> = result::Result<T, String>;
 
 const movement_speed: f64 = 1.0;
 
-pub static TETROMINOES: [Tetromino; 7] = [
+pub static TETROMINOS: [Tetromino; 7] = [
     Tetromino {
         name: Shape::I,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],

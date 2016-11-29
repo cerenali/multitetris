@@ -5,7 +5,7 @@ use piston::input::*;
 use rand::Rng;
 
 use super::block::Tetromino;
-use super::block::TETROMINOES;
+use super::block::TETROMINOS;
 
 pub type Result<T> = result::Result<T, String>;
 
@@ -26,17 +26,22 @@ pub struct Board {
     pub state: GameState,
 
     // line_counts[i] = # of filled blocks in row i
-    line_counts: [i64; BOARD_HEIGHT as usize] 
+    line_counts: [i64; BOARD_HEIGHT as usize] ,
+    // for "random bag" generation of the next tetromino
+    tetrominos_bag: Vec<Tetromino>
 }
 
 impl Board {
     pub fn init_board() -> Board {
+        let mut bag = TETROMINOS.to_vec();
+        ::rand::thread_rng().shuffle(&mut bag);
+
         Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
-            current_piece: *(::rand::thread_rng().choose(&TETROMINOES).unwrap()),
             state: GameState::Playing,
 
-            line_counts: [0; BOARD_HEIGHT as usize]
+            line_counts: [0; BOARD_HEIGHT as usize],
+            tetrominos_bag: bag
         }
     }
 
@@ -77,7 +82,7 @@ impl Board {
                     Button::Keyboard(Key::R) => {
                         // reset all game variables
                         self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
-                        self.current_piece = *(::rand::thread_rng().choose(&TETROMINOES).unwrap());
+                        self.current_piece = *(::rand::thread_rng().choose(&TETROMINOS).unwrap());
                         self.state = GameState::Playing;
                         self.line_counts = [0; BOARD_HEIGHT as usize];
                     }
@@ -247,9 +252,12 @@ impl Board {
         }
     }
 
-    pub fn get_next_piece(&self) -> Tetromino {
-        // add new piece to the board (randomly chosen)
-        *(::rand::thread_rng().choose(&TETROMINOES).unwrap())
+    pub fn get_next_piece(&mut self) -> Tetromino {
+        if self.tetrominos_bag.len() == 0 {
+            self.tetrominos_bag = TETROMINOS.to_vec();
+            ::rand::thread_rng().shuffle(&mut self.tetrominos_bag);
+        }
+        self.tetrominos_bag.remove(0)
     }
 
     pub fn draw_board(self) -> Result<()> {

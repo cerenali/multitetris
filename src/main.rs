@@ -73,7 +73,6 @@ impl App {
                 }
             }
 
-
             // iterate thru current piece and draw its current location
             for (r, row) in blocks.iter().enumerate() {
                 for (col, colblock) in row.iter().enumerate() {
