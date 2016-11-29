@@ -77,6 +77,9 @@ impl App {
     }
 
     fn update(&mut self, args: &UpdateArgs) {
+        if self.board.state != board::GameState::Continue {
+            return
+        }
         self.board.advance_board();
     }
 }

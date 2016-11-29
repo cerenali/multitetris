@@ -16,6 +16,7 @@ use super::BOARD_HEIGHT;
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum GameState {
     Continue,
+    Paused,
     PlayerLost,
     PlayerQuit
 }
@@ -64,6 +65,14 @@ impl Board {
                         if self.can_move_current_piece_right() {
                             self.current_piece.move_right();
                         }
+                    }
+                    Button::Keyboard(Key::P) => {
+                        if self.state == GameState::Continue {
+                            self.state = GameState::Paused;
+                        } else if self.state == GameState::Paused {
+                            self.state = GameState::Continue;
+                        }
+                        
                     }
                     _ => {}
                 }
