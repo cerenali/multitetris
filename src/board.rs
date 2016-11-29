@@ -38,6 +38,7 @@ impl Board {
 
         Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+            current_piece: bag.remove(0),
             state: GameState::Playing,
 
             line_counts: [0; BOARD_HEIGHT as usize],
@@ -81,10 +82,14 @@ impl Board {
                     // R = restart button
                     Button::Keyboard(Key::R) => {
                         // reset all game variables
+                        let mut bag = TETROMINOS.to_vec();
+                        ::rand::thread_rng().shuffle(&mut bag);
+                        
                         self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
-                        self.current_piece = *(::rand::thread_rng().choose(&TETROMINOS).unwrap());
+                        self.current_piece = bag.remove(0);
                         self.state = GameState::Playing;
                         self.line_counts = [0; BOARD_HEIGHT as usize];
+                        self.tetrominos_bag = bag;
                     }
                     _ => {}
                 }
