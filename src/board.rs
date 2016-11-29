@@ -34,7 +34,6 @@ impl Board {
         Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
             current_piece: *(::rand::thread_rng().choose(&TETROMINOES).unwrap()),
-            state: GameState::Continue
             state: GameState::Continue,
 
             line_counts: [0; BOARD_HEIGHT as usize]
