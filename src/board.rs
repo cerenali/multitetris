@@ -2,40 +2,63 @@ use std::result;
 
 use piston::input::*;
 
+use rand::Rng;
+
 use super::block::Tetromino;
-use super::block::blocks;
+use super::block::TETROMINOES;
 
 pub type Result<T> = result::Result<T, String>;
 
+use super::BLOCK_SIZE;
+use super::BOARD_WIDTH;
+use super::BOARD_HEIGHT;
+
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub enum GameState {
+    Continue,
+    PlayerLost,
+    PlayerQuit
+}
+
 pub struct Board {
-    pub cells: [[u8; 10]; 15], // arbitrary width n height
-    current_piece: Tetromino    // current active Tetromino
+    pub cells: [[u8; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+    pub current_piece: Tetromino, // current active Tetromino
+    pub state: GameState
 }
 
 impl Board {
     pub fn init_board() -> Board {
         Board {
-            cells: [[0; 10]; 15],
-            current_piece: Tetromino { blocks: blocks[0] }
+            cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
+            current_piece: *(::rand::thread_rng().choose(&TETROMINOES).unwrap()),
+            state: GameState::Continue
         }
     }
 
     pub fn handle_key_press(&mut self, inp: Input) {
         match inp {
             Input::Press(but) => {
-                println!("button pressed: {:?}", but);
                 match but {
                     Button::Keyboard(Key::Up) => {
-                        // does this do anything
+                        self.current_piece.rotate_right();
+
+                        // undo rotation if it was invalid...lol
+                        if self.current_piece_out_of_bounds() {
+                            self.current_piece.rotate_left();
+                        }
                     }
                     Button::Keyboard(Key::Down) => {
-                        // move current piece down faster
+                        // TODO: drop piece to bottom?
                     }
                     Button::Keyboard(Key::Left) => {
-                        // move current piece left
+                        if self.current_piece.leftmost() - 1.0 >= 0.0 {
+                            self.current_piece.move_left();
+                        }
                     }
                     Button::Keyboard(Key::Right) => {
-                        // move current piece right
+                        if self.current_piece.rightmost() + 1.0 < BOARD_WIDTH as f64  {
+                            self.current_piece.move_right();
+                        }
                     }
                     _ => {}
                 }
@@ -45,26 +68,93 @@ impl Board {
     }
 
     pub fn check_line_cleared(self) -> Result<u8> {
-        // check if the player cleared a line
-        // returns the number of the line cleared
+        // TODO check if the player cleared a line
+        // TODO returns the number of the line cleared?
         Ok((0))
     }
 
-    pub fn check_game_over(self) -> Result<bool> {
-        // check if the player has lost or not
-        // (determined by checking if a piece has touched the top)
-        Ok(true)
-    }
+    pub fn advance_board(&mut self) -> Result<GameState> {
+        if self.state != GameState::Continue {
+            return Ok(self.state.clone())
+        }
+        // check if game is over or not
+        // check top row of board and see if any of them are filled?
+        for (col, colblock) in self.cells[0].iter().enumerate() {
+            if *colblock == 1 {
+                // TODO: clear current piece?
+                return Ok(GameState::PlayerLost)
+            }
+        }
 
-    pub fn advance_board(&mut self) -> Result<()> {
         // make the existing piece fall
-        // if it's done (reached bottom), spawn a new one (get_next_piece)
-        Ok(())
+        if self.can_move_current_piece_down() {
+            self.current_piece.move_down();
+        } else {
+            // add piece to board cells
+            self.set_piece_on_board();
+
+            // get new piece
+            self.current_piece = self.get_next_piece();
+        }
+
+        Ok(GameState::Continue)
     }
 
-    pub fn get_next_piece(self, new_piece: Tetromino) -> Board {
+    fn can_move_current_piece_down(&self) -> bool {
+        let above_bottom: bool = self.current_piece.bottommost() + 1.0 < BOARD_HEIGHT as f64;
+        if !above_bottom {
+            return false
+        }
+
+        // check if piece will intersect with a piece already on the board
+        let current_x = self.current_piece.x_offset;
+        let current_y = self.current_piece.y_offset;
+        for (r, row) in self.current_piece.blocks.iter().enumerate() {
+            for (col, colblock) in row.iter().enumerate() {
+                if *colblock == 1 {
+                    let board_x: i64 = (col as i64) + (current_x as i64);
+                    let board_y: i64 = ((r as f64) + current_y + 1.0) as i64; // 1 down
+                    if self.cells[board_y as usize][board_x as usize] == 1 {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        above_bottom
+    }
+
+    fn current_piece_out_of_bounds(&self) -> bool {
+        for (r, row) in self.current_piece.blocks.iter().enumerate() {
+            for (col, colblock) in row.iter().enumerate() {
+                if *colblock == 1 {
+                    if self.current_piece.leftmost() < 0.0 || self.current_piece.rightmost() >= BOARD_WIDTH as f64 || self.current_piece.bottommost() >= BOARD_HEIGHT as f64 {
+                        return true
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    pub fn set_piece_on_board(&mut self) {
+        let current_x = self.current_piece.x_offset;
+        let current_y = self.current_piece.y_offset;
+        for (r, row) in self.current_piece.blocks.iter().enumerate() {
+            for (col, colblock) in row.iter().enumerate() {
+                if *colblock == 1 {
+                    let x: i64 = (col as i64) + (current_x as i64);
+                    let y: i64 = (r as i64) + (current_y as i64);
+                    self.cells[y as usize][x as usize] = 1;
+
+                }
+            }
+        }
+    }
+
+    pub fn get_next_piece(&self) -> Tetromino {
         // add new piece to the board (randomly chosen)
-        self
+        *(::rand::thread_rng().choose(&TETROMINOES).unwrap())
     }
 
     pub fn draw_board(self) -> Result<()> {
