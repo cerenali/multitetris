@@ -56,12 +56,12 @@ impl Board {
                         // TODO: drop piece to bottom?
                     }
                     Button::Keyboard(Key::Left) => {
-                        if self.current_piece.leftmost() - 1.0 >= 0.0 {
+                        if self.can_move_current_piece_left() {
                             self.current_piece.move_left();
                         }
                     }
                     Button::Keyboard(Key::Right) => {
-                        if self.current_piece.rightmost() + 1.0 < BOARD_WIDTH as f64  {
+                        if self.can_move_current_piece_right() {
                             self.current_piece.move_right();
                         }
                     }
@@ -140,11 +140,9 @@ impl Board {
     }
 
     fn can_move_current_piece_down(&self) -> bool {
-        let above_bottom: bool = self.current_piece.bottommost() + 1.0 < BOARD_HEIGHT as f64;
-        if !above_bottom {
+        if self.current_piece.bottommost() + 1.0 >= BOARD_HEIGHT as f64 {
             return false
         }
-
         // check if piece will intersect with a piece already on the board
         let current_x = self.current_piece.x_offset;
         let current_y = self.current_piece.y_offset;
@@ -159,8 +157,49 @@ impl Board {
                 }
             }
         }
+        true
+    }
 
-        above_bottom
+    fn can_move_current_piece_left(&self) -> bool {
+        if self.current_piece.leftmost() - 1.0 < 0.0 {
+            return false;
+        }
+        // check if will intersect with a piece already on the board
+        let current_x = self.current_piece.x_offset;
+        let current_y = self.current_piece.y_offset;
+        for (r, row) in self.current_piece.blocks.iter().enumerate() {
+            for (col, colblock) in row.iter().enumerate() {
+                if *colblock == 1 {
+                    let board_x: i64 = (col as i64) + (current_x as i64) - 1;
+                    let board_y: i64 = ((r as f64) + current_y) as i64; // 1 down
+                    if self.cells[board_y as usize][board_x as usize] == 1 {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+
+    fn can_move_current_piece_right(&self) -> bool {
+        if self.current_piece.rightmost() + 1.0 >= BOARD_WIDTH as f64  {
+            return false;
+        }
+        // check if will intersect with a piece already on the board
+        let current_x = self.current_piece.x_offset;
+        let current_y = self.current_piece.y_offset;
+        for (r, row) in self.current_piece.blocks.iter().enumerate() {
+            for (col, colblock) in row.iter().enumerate() {
+                if *colblock == 1 {
+                    let board_x: i64 = (col as i64) + (current_x as i64) + 1;
+                    let board_y: i64 = ((r as f64) + current_y) as i64; // 1 down
+                    if self.cells[board_y as usize][board_x as usize] == 1 {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
     }
 
     fn current_piece_out_of_bounds(&self) -> bool {
