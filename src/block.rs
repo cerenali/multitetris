@@ -12,43 +12,50 @@ pub static TETROMINOES: [Tetromino; 7] = [
         name: Shape::I,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [0.0, 1.0, 1.0, 1.0]
     },
     Tetromino {
         name: Shape::J,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [0.0, 1.0, 1.0, 1.0]
     },
     Tetromino {
         name: Shape::L,
         blocks: [[0, 1, 0, 0], [0, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [1.0, 0.6, 0.0, 1.0]
     },
     Tetromino {
         name: Shape::O,
         blocks: [[1, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 1.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [1.0, 1.0, 0.0, 1.0]
     },
     Tetromino {
         name: Shape::S,
         blocks: [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [0.48, 1.0, 0.0, 1.0]
     },
     Tetromino {
         name: Shape::T,
         blocks: [[0, 0, 0, 0], [1, 1, 1, 0], [0, 1, 0, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [0.4, 0.0, 0.8, 1.0]
     },
     Tetromino {
         name: Shape::Z,
         blocks: [[0, 0, 0, 0], [1, 1, 0, 0], [0, 1, 1, 0], [0, 0, 0, 0]],
         x_offset: (BOARD_WIDTH as f64 / 2.0) - 2.0,
-        y_offset: 0.0
+        y_offset: 0.0,
+        color: [1.0, 0.0, 0.0, 1.0]
     },  
 ];
 
@@ -68,7 +75,8 @@ pub struct Tetromino {
     pub name: Shape,
     pub blocks: [[u8; 4]; 4],
     pub x_offset: f64, // offset (in block cell units) of the top left cell
-    pub y_offset: f64
+    pub y_offset: f64,
+    pub color: [f32; 4] // color of the block
 }
 
 impl Tetromino {

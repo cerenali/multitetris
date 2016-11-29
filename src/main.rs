@@ -24,6 +24,7 @@ pub const BOARD_HEIGHT: u32 = 22; // 22 cells up n down
 pub const BOARD_BKD_COLOR: [f32; 4] = [0.18, 0.18, 0.18, 1.0]; // dark gray
 pub const RED: [f32; 4] = [0.96, 0.12, 0.12, 1.0];
 pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 pub const BRIGHT_GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
 pub struct App {
@@ -42,7 +43,7 @@ impl App {
         if self.board.state == board::GameState::Over {
             self.gl.draw(args.viewport(), |c, gl| {
                 // Clear the screen.
-                clear(BOARD_BKD_COLOR, gl);
+                clear(RED, gl);
             });
             return
         }
@@ -53,6 +54,7 @@ impl App {
         let blocks = self.board.current_piece.blocks;
         let current_x = self.board.current_piece.x_offset;
         let current_y = self.board.current_piece.y_offset;
+        let piece_color = self.board.current_piece.color;
 
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
@@ -66,7 +68,7 @@ impl App {
                         let x: f64 = col as f64;
                         let y: f64 = r as f64;
                         let b = rectangle::square(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE);
-                        rectangle(BRIGHT_GREEN, b, c.transform.trans(0.0, 0.0), gl);
+                        rectangle(WHITE, b, c.transform.trans(0.0, 0.0), gl);
                     }
                 }
             }
@@ -79,7 +81,7 @@ impl App {
                         let x: f64 = (col as f64) + (current_x as f64);
                         let y: f64 = (r as f64) + (current_y as f64);
                         let b = rectangle::square(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE);
-                        rectangle(RED, b, c.transform.trans(0.0, 0.0), gl);
+                        rectangle(piece_color, b, c.transform.trans(0.0, 0.0), gl);
                     }
                 }
             }
