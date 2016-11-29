@@ -58,12 +58,6 @@ impl Board {
                             self.current_piece.rotate_left();
                         }
                     }
-                    Button::Keyboard(Key::Down) => {
-                        // pressing down drops piece to bottom
-                        while self.can_move_current_piece_down() {
-                            self.current_piece.move_down();
-                        }
-                    }
                     Button::Keyboard(Key::Left) => {
                         if self.can_move_current_piece_left() {
                             self.current_piece.move_left();
@@ -72,6 +66,17 @@ impl Board {
                     Button::Keyboard(Key::Right) => {
                         if self.can_move_current_piece_right() {
                             self.current_piece.move_right();
+                        }
+                    }
+                    Button::Keyboard(Key::Down) => {
+                        if self.can_move_current_piece_down() {
+                            self.current_piece.move_down();
+                        }
+                    }
+                    Button::Keyboard(Key::Space) => {
+                        // pressing spacebar drops piece to bottom
+                        while self.can_move_current_piece_down() {
+                            self.current_piece.move_down();
                         }
                     }
                     // P = pause button
