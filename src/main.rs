@@ -33,9 +33,21 @@ pub struct App {
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
-        if self.board.state != board::GameState::Continue {
+        // do nothing if paused
+        if self.board.state == board::GameState::Paused {
             return
         }
+
+        // show game over screen if game is done
+        if self.board.state == board::GameState::Over {
+            self.gl.draw(args.viewport(), |c, gl| {
+                // Clear the screen.
+                clear(BOARD_BKD_COLOR, gl);
+            });
+            return
+        }
+
+        // show gameplay screen
         let cells = self.board.cells;
         
         let blocks = self.board.current_piece.blocks;
@@ -71,13 +83,11 @@ impl App {
                     }
                 }
             }
-        });
-
-        
+        });        
     }
 
     fn update(&mut self, args: &UpdateArgs) {
-        if self.board.state != board::GameState::Continue {
+        if self.board.state != board::GameState::Playing {
             return
         }
         self.board.advance_board();

@@ -15,10 +15,9 @@ use super::BOARD_HEIGHT;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum GameState {
-    Continue,
+    Playing,
     Paused,
-    PlayerLost,
-    PlayerQuit
+    Over // donezo. player lost or quit
 }
 
 pub struct Board {
@@ -35,7 +34,7 @@ impl Board {
         Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
             current_piece: *(::rand::thread_rng().choose(&TETROMINOES).unwrap()),
-            state: GameState::Continue,
+            state: GameState::Playing,
 
             line_counts: [0; BOARD_HEIGHT as usize]
         }
@@ -66,13 +65,21 @@ impl Board {
                             self.current_piece.move_right();
                         }
                     }
+                    // P = pause button
                     Button::Keyboard(Key::P) => {
-                        if self.state == GameState::Continue {
+                        if self.state == GameState::Playing {
                             self.state = GameState::Paused;
                         } else if self.state == GameState::Paused {
-                            self.state = GameState::Continue;
+                            self.state = GameState::Playing;
                         }
-                        
+                    }
+                    // R = restart button
+                    Button::Keyboard(Key::R) => {
+                        // reset all game variables
+                        self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
+                        self.current_piece = *(::rand::thread_rng().choose(&TETROMINOES).unwrap());
+                        self.state = GameState::Playing;
+                        self.line_counts = [0; BOARD_HEIGHT as usize];
                     }
                     _ => {}
                 }
@@ -119,7 +126,7 @@ impl Board {
     }
 
     pub fn advance_board(&mut self) -> Result<GameState> {
-        if self.state != GameState::Continue {
+        if self.state != GameState::Playing {
             return Ok(self.state.clone())
         }
         // check if game is over or not
@@ -127,7 +134,8 @@ impl Board {
         for (col, colblock) in self.cells[0].iter().enumerate() {
             if *colblock == 1 {
                 // TODO: clear current piece?
-                return Ok(GameState::PlayerLost)
+                self.state = GameState::Over;
+                return Ok(GameState::Over)
             }
         }
 
@@ -145,7 +153,7 @@ impl Board {
             self.current_piece = self.get_next_piece();
         }
 
-        Ok(GameState::Continue)
+        Ok(GameState::Playing)
     }
 
     fn can_move_current_piece_down(&self) -> bool {
