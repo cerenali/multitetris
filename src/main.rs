@@ -54,7 +54,7 @@ impl App {
                         let x: f64 = col as f64;
                         let y: f64 = r as f64;
                         let b = rectangle::square(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE);
-                        rectangle(BLACK, b, c.transform.trans(0.0, 0.0), gl);
+                        rectangle(BRIGHT_GREEN, b, c.transform.trans(0.0, 0.0), gl);
                     }
                 }
             }
