@@ -3,9 +3,7 @@ use super::BLOCK_SIZE;
 
 pub type Result<T> = result::Result<T, String>;
 
-const down_speed: f64 = 0.05;
-const side_movement_speed: f64 = 1.0;
-
+const movement_speed: f64 = 1.0;
 
 pub static TETROMINOES: [Tetromino; 7] = [
     Tetromino {
@@ -67,7 +65,7 @@ pub enum Shape {
 pub struct Tetromino {
     pub name: Shape,
     pub blocks: [[u8; 4]; 4],
-    pub x_offset: f64,
+    pub x_offset: f64, // offset (in block cell units) of the top left cell
     pub y_offset: f64
 }
 
@@ -114,22 +112,21 @@ impl Tetromino {
     }
 
     pub fn block_width(&self) -> f64 {
-        // get rightmost block and subtract x from it
-        let mut max_width = 0.0;
+        let mut cols_vec: [i64; 4] = [0, 0, 0, 0];
         for (r, row) in self.blocks.iter().enumerate() {
-            let mut width = 0.0;
             for (c, col) in row.iter().enumerate() {
                 if self.blocks[r][c] == 1 {
-                    width += 1.0;
+                    cols_vec[c] = 1;
                 }
             }
-            if width > max_width {
-                max_width = width;
+        }
+        let mut width = 0.0;
+        for x in cols_vec.iter() {
+            if *x == 1 {
+                width += 1.0;
             }
         }
-        // max_width -= self.x;
-        println!(">> width for block {:?}: {:?}", self.name, max_width);
-        max_width
+        width
     }
 
     // coordinates of leftmost point in block
@@ -148,17 +145,7 @@ impl Tetromino {
     }
 
     pub fn rightmost(&self) -> f64 {
-        let mut rightmost = 0.0;
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
-                if self.blocks[r][c] == 1 {
-                    if rightmost < c as f64 {
-                        rightmost = c as f64;
-                    }
-                }
-            }
-        }
-        rightmost + self.x_offset + self.block_width()
+        self.leftmost() + self.block_width() - 1.0
     }
 
     pub fn topmost(&self) -> f64 {
@@ -176,28 +163,18 @@ impl Tetromino {
     }
 
     pub fn bottommost(&self) -> f64 {
-        let mut bottommost = 0.0;
-        for (r, row) in self.blocks.iter().enumerate() {
-            for (c, col) in row.iter().enumerate() {
-                if self.blocks[r][c] == 1 {
-                    if bottommost < r as f64 {
-                        bottommost = r as f64;
-                    }
-                }
-            }
-        }
-        bottommost + self.y_offset + self.block_height()
+        self.topmost() + self.block_height() - 1.0
     }
 
     pub fn move_down(&mut self) {
-        self.y_offset += down_speed;
+        self.y_offset += movement_speed;
     }
 
     pub fn move_left(&mut self) {
-        self.x_offset -= side_movement_speed;
+        self.x_offset -= movement_speed;
     }
 
     pub fn move_right(&mut self) {
-        self.x_offset += side_movement_speed;
+        self.x_offset += movement_speed;
     }
 }
