@@ -27,73 +27,90 @@ pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 pub const BRIGHT_GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
+pub const NUM_BOARDS: i64 = 2; // number of boards
+
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    board: board::Board // the game board
+    boards: Vec<board::Board>, // the game board
 }
 
 impl App {
     fn render(&mut self, args: &RenderArgs) {
-        // do nothing if paused
-        if self.board.state == board::GameState::Paused {
-            return
-        }
-
-        // show game over screen if game is done
-        if self.board.state == board::GameState::Over {
-            self.gl.draw(args.viewport(), |c, gl| {
-                // Clear the screen.
-                clear(RED, gl);
-            });
-            return
-        }
-
-        // show gameplay screen
-        let cells = self.board.cells;
-        
-        let blocks = self.board.current_piece.blocks;
-        let current_x = self.board.current_piece.x_offset;
-        let current_y = self.board.current_piece.y_offset;
-        let piece_color = self.board.current_piece.color;
 
         self.gl.draw(args.viewport(), |c, gl| {
             // Clear the screen.
             clear(BOARD_BKD_COLOR, gl);
+        });
 
-            // draw board???
-            // iterate thru board cells and draw in filled-in blocks
-            for row in 0..cells.len() {
-                for col in 0..cells[0].len() {
-                    if cells[row][col] == 1 {
-                        let x: f64 = col as f64;
-                        let y: f64 = row as f64;
-                        let size: f64 = BLOCK_SIZE as f64;
-                        let b = rectangle::square(x * size, y * size, size);
-                        rectangle(WHITE, b, c.transform.trans(0.0, 0.0), gl);
-                    }
-                }
+
+        for (i, board) in &mut self.boards.iter().enumerate() {
+            // do nothing if paused
+            if board.state == board::GameState::Paused {
+                // return
+                continue
             }
 
-            // iterate thru current piece and draw its current location
-            for row in 0..blocks.len() {
-                for col in 0..blocks[0].len() {
-                    if blocks[row][col] == 1 {
-                        let x: f64 = (col as f64) + current_x;
-                        let y: f64 = (row as f64) + current_y;
-                        let size: f64 = BLOCK_SIZE as f64;
-                        let b = rectangle::square(x * size, y * size, size);
-                        rectangle(piece_color, b, c.transform.trans(0.0, 0.0), gl);
+            // show game over screen if game is done
+            if board.state == board::GameState::Over {
+                self.gl.draw(args.viewport(), |c, gl| {
+                    rectangle(RED,
+                             [(BOARD_WIDTH * BLOCK_SIZE) as f64 * i as f64,
+                                0.0,
+                                (BOARD_WIDTH * BLOCK_SIZE) as f64,
+                                (BOARD_HEIGHT * BLOCK_SIZE) as f64],
+                             c.transform.trans(0.0, 0.0),
+                             gl);
+                });
+                continue
+            }
+
+            // show gameplay screen
+            let cells = board.cells;
+            
+            let blocks = board.current_piece.blocks;
+            let current_x = board.current_piece.x_offset;
+            let current_y = board.current_piece.y_offset;
+            let piece_color = board.current_piece.color;
+
+            self.gl.draw(args.viewport(), |c, gl| {
+                // draw board???
+                // iterate thru board cells and draw in filled-in blocks
+                for row in 0..cells.len() {
+                    for col in 0..cells[0].len() {
+                        if cells[row][col] == 1 {
+                            let x: f64 = col as f64 + (BOARD_WIDTH * i as i64) as f64;
+                            let y: f64 = row as f64;
+                            let size: f64 = BLOCK_SIZE as f64;
+                            let b = rectangle::square(x * size, y * size, size);
+                            rectangle(WHITE, b, c.transform.trans(0.0, 0.0), gl);
+                        }
                     }
                 }
-            }
-        });        
+
+                // iterate thru current piece and draw its current location
+                for row in 0..blocks.len() {
+                    for col in 0..blocks[0].len() {
+                        if blocks[row][col] == 1 {
+                            let x: f64 = (col as f64) + current_x + (BOARD_WIDTH * i as i64) as f64;
+                            let y: f64 = (row as f64) + current_y;
+                            let size: f64 = BLOCK_SIZE as f64;
+                            let b = rectangle::square(x * size, y * size, size);
+                            rectangle(piece_color, b, c.transform.trans(0.0, 0.0), gl);
+                        }
+                    }
+                }
+            });
+        }
     }
 
     fn update(&mut self, args: &UpdateArgs) {
-        if self.board.state != board::GameState::Playing {
-            return
+        for mut board in &mut self.boards {
+            if board.state != board::GameState::Playing {
+                // return
+                continue
+            }
+            board.advance_board();
         }
-        self.board.advance_board();
     }
 }
 
@@ -104,7 +121,7 @@ fn main() {
     // Create an Glutin window.
     let mut window: Window = WindowSettings::new(
             "t e t r i s",
-            [(BLOCK_SIZE * BOARD_WIDTH) as u32, (BLOCK_SIZE * BOARD_HEIGHT) as u32]
+            [(BLOCK_SIZE * BOARD_WIDTH * NUM_BOARDS) as u32, (BLOCK_SIZE * BOARD_HEIGHT) as u32]
         )
         .opengl(opengl)
         .exit_on_esc(true)
@@ -112,9 +129,13 @@ fn main() {
         .unwrap();
 
     // Create a new game and run it.
+    let mut boards: Vec<board::Board> = Vec::new();
+    for i in 0..NUM_BOARDS {
+        boards.push(Board::init_board());
+    }
     let mut app = App {
         gl: GlGraphics::new(opengl),
-        board: Board::init_board()
+        boards: boards,
     };
 
     let mut events = window.events();
@@ -130,7 +151,9 @@ fn main() {
         }
 
         if let Event::Input(i) = e {
-            app.board.handle_key_press(i);
+            for board in &mut app.boards {
+                board.handle_key_press(&i);
+            }
         }
     }
 }

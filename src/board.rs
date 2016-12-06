@@ -45,8 +45,8 @@ impl Board {
         }
     }
 
-    pub fn handle_key_press(&mut self, inp: Input) {
-        match inp {
+    pub fn handle_key_press(&mut self, inp: &Input) {
+        match *inp {
             Input::Press(but) => {
                 match but {
                     Button::Keyboard(Key::Up) => {
