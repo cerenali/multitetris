@@ -53,7 +53,8 @@ pub struct App {
   gl: GlGraphics, // OpenGL drawing backend.
   boards: Vec<board::Board>, // game boards
   cache: GlyphCache<'static>, // for drawing text
-  token: i32
+  token: i32,
+  winner: i32
 }
 
 impl App {
@@ -325,7 +326,8 @@ fn main() {
     gl: GlGraphics::new(opengl),
     boards: boards,
     cache: GlyphCache::new(font_path).unwrap(),
-    token: -1
+    token: -1,
+    winner: -1
   };
 
   loop {
@@ -488,6 +490,8 @@ fn main() {
               let winner_num_str = split_msg.next().unwrap();
               let winner_num = winner_num_str.parse::<i32>().unwrap();
               // TODO: announce winner, exit game?
+              println!("==== GAME OVER ; WINNER: PLAYER {}", winner_num);
+              // process::exit(0);
             },
             _ => {
               println!("Unknown command\n");
@@ -498,6 +502,30 @@ fn main() {
           break;
         }
       };
+    }
+    // check for game over; if game over then send GAME OVER msg
+    let mut num_ended_games = 0;
+    let mut winner = 0;
+    let mut i = 0;
+    for board in app.boards.iter() {
+      if board.state == board::GameState::Over {
+        num_ended_games += 1;
+      }
+      else {
+        winner = i + 1;
+      }
+      i += 1;
+    }
+    if num_ended_games == app.boards.len() - 1 && app.winner == -1 {
+      // send game over message
+      app.winner = winner;
+      match tx.send(Message::text(format!("GAME_OVER {}", app.winner))) { 
+        Ok(()) => (),
+        Err(e) => {
+          println!("Main Loop: {:?}", e);
+          break;
+        }
+      }
     }
   }
 
