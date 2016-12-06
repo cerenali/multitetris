@@ -23,6 +23,8 @@ pub struct Board {
     pub state: GameState,
     pub score: u64,
 
+    pub token: i32, // token identifier for use by the game server
+
     // line_counts[i] = # of filled blocks in row i
     line_counts: [i64; BOARD_HEIGHT as usize],
     // for "random bag" generation of the next tetromino
@@ -39,6 +41,8 @@ impl Board {
             current_piece: bag.remove(0),
             state: GameState::Playing,
             score: 0,
+
+            token: 0,
 
             line_counts: [0; BOARD_HEIGHT as usize],
             tetrominos_bag: bag
