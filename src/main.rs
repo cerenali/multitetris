@@ -8,7 +8,6 @@ extern crate websocket;
 
 use std::thread;
 use std::sync::mpsc::channel;
-use std::io::stdin;
 use websocket::{Message, Sender, Receiver};
 use websocket::message::Type;
 use websocket::client::request::Url;
@@ -60,7 +59,7 @@ pub struct App {
 impl App {
   fn render(&mut self, args: &RenderArgs) {
 
-    self.gl.draw(args.viewport(), |c, gl| {
+    self.gl.draw(args.viewport(), |_, gl| {
       // Clear the screen.
       clear(BOARD_BKD_COLOR, gl);
     });
@@ -194,7 +193,7 @@ impl App {
     }
   }
 
-  fn update(&mut self, args: &UpdateArgs) {
+  fn update(&mut self) {
     for mut board in &mut self.boards {
       if board.state != board::GameState::Playing {
         continue
@@ -282,7 +281,7 @@ fn main() {
         // Pass along to games the message we received
         _ => {
           let message1 = String::from_utf8(message.payload.into_owned()).unwrap();
-          tx1_1.send(Message::text(message1)); 
+          tx1_1.send(Message::text(message1)).unwrap(); 
         }
       }
     }
@@ -311,7 +310,7 @@ fn main() {
 
   // Create a new game and run it.
   let mut boards: Vec<board::Board> = Vec::new();
-  for i in 0..NUM_BOARDS {
+  for _ in 0..NUM_BOARDS {
     boards.push(Board::init_board());
   }
 
@@ -333,17 +332,17 @@ fn main() {
         match command {
           "NUM_CONNS" => {
             if token == 0 {
-              let equals = split_msg.next().unwrap();
+              let _ = split_msg.next().unwrap();
               let token_val = split_msg.next().unwrap();
               token = token_val.parse::<i32>().unwrap();
               app.token = token;
               println!("Joined game as Player {}!\n", app.token);
-              tx_2.send(Message::text(format!("CLIENT_ACK {}", token_val)));
+              tx_2.send(Message::text(format!("CLIENT_ACK {}", token_val))).unwrap();
             }
           },
           "START!" => {
             println!("START!\n");
-            tx_2.send(Message::text(format!("FIRST_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].current_piece.name)));
+            tx_2.send(Message::text(format!("FIRST_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].current_piece.name))).unwrap();
             break;
           },
           _ => { }
@@ -375,7 +374,7 @@ fn main() {
               if client_num != app.token {
                 let keystroke_str = split_msg.next().unwrap();
                 // update board for client number client_num
-                let mut input_keystroke: Input = match keystroke_str {
+                let input_keystroke: Input = match keystroke_str {
                   "UP" => Input::Press(Button::Keyboard(Key::Up)),
                   "DOWN" => Input::Press(Button::Keyboard(Key::Down)),
                   "LEFT" => Input::Press(Button::Keyboard(Key::Left)),
@@ -447,7 +446,7 @@ fn main() {
       app.render(&r);
     }
 
-    if let Some(u) = e.update_args() {
+    if let Some(_) = e.update_args() {
       if app.boards[(app.token - 1) as usize].new_block {
         // send new block message
         match tx.send(Message::text(format!("NEW_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].next_piece.name))) { 
@@ -458,7 +457,8 @@ fn main() {
           }
         }
       }
-      app.update(&u);
+      // app.update(&u);
+      app.update();
     }
 
     if let Event::Input(i) = e {
