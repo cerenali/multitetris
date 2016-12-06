@@ -27,14 +27,17 @@ pub const BOARD_HEIGHT: i64 = 22; // 22 cells up n down
 pub const NUM_BOARDS: i64 = 2; // number of boards
 
 pub const FONT_SIZE: u32 = 24;
-pub const SCORE_LEFT_MARGIN: f64 = 15.0;
-pub const SCORE_TOP_MARGIN: f64 = 35.0;
+const SCORE_LEFT_MARGIN: f64 = 15.0;
+const SCORE_TOP_MARGIN: f64 = 35.0;
 
-pub const BOARD_BKD_COLOR: [f32; 4] = [0.18, 0.18, 0.18, 1.0]; // dark gray
-pub const RED: [f32; 4] = [0.96, 0.12, 0.12, 1.0];
-pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
-pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
-pub const BRIGHT_GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
+const GAMEOVER_LEFT_MARGIN: f64 = 70.0;
+const GAMEOVER_TOP_MARGIN: f64 = 250.0;
+
+const BOARD_BKD_COLOR: [f32; 4] = [0.18, 0.18, 0.18, 1.0]; // dark gray
+// const RED: [f32; 4] = [0.96, 0.12, 0.12, 1.0];
+const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
+const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
+// const BRIGHT_GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
@@ -57,17 +60,48 @@ impl App {
                 continue
             }
 
+            let font_cache = &mut self.cache;
+
             // show game over screen if game is done
             if board.state == board::GameState::Over {
                 self.gl.draw(args.viewport(), |c, gl| {
-                    rectangle(RED,
+                    rectangle(BLACK,
                              [(BOARD_WIDTH * BLOCK_SIZE) as f64 * i as f64,
                                 0.0,
                                 (BOARD_WIDTH * BLOCK_SIZE) as f64,
                                 (BOARD_HEIGHT * BLOCK_SIZE) as f64],
                              c.transform.trans(0.0, 0.0),
                              gl);
+
+                    // draw game over message
+                    let mut text = graphics::Text::new(FONT_SIZE);
+                    text.color = WHITE;
+                    let mut transform: graphics::context::Context =
+                                c.trans(GAMEOVER_LEFT_MARGIN + (BLOCK_SIZE * BOARD_WIDTH * i as i64) as f64, GAMEOVER_TOP_MARGIN);
+                    text.draw(&format!("GAME OVER"),
+                              font_cache,
+                              &c.draw_state,
+                              transform.transform,
+                              gl);
+                    transform = transform.trans(0.0, FONT_SIZE as f64 + 40.0);
+                    // not centered because i am a weenie
+                    text.draw(&format!("   Score: {}", board.score),
+                              font_cache,
+                              &c.draw_state,
+                              transform.transform,
+                              gl);
+
+                    // draw border
+                    let rect_border = graphics::Rectangle::new_border(WHITE, 0.3);
+                    rect_border.draw([(BOARD_WIDTH * BLOCK_SIZE) as f64 * i as f64,
+                                     0.0,
+                                     (BOARD_WIDTH * BLOCK_SIZE) as f64,
+                                     (BOARD_HEIGHT * BLOCK_SIZE) as f64],
+                        &c.draw_state,
+                        c.transform,
+                        gl);
                 });
+
                 continue
             }
 
@@ -83,8 +117,6 @@ impl App {
             let ghost_x = board.ghost_piece.x_offset;
             let ghost_y = board.ghost_piece.y_offset;
             let ghost_piece_color = board.ghost_piece.color;
-
-            let font_cache = &mut self.cache;
 
             self.gl.draw(args.viewport(), |c, gl| {
                 // iterate thru board cells and draw in filled-in blocks
