@@ -1,16 +1,14 @@
-use std::result;
-
 use piston::input::*;
 
 use rand::Rng;
 
+use super::BOARD_WIDTH;
+use super::BOARD_HEIGHT;
 use super::block::Tetromino;
 use super::block::TETROMINOS;
 
-pub type Result<T> = result::Result<T, String>;
-
-use super::BOARD_WIDTH;
-use super::BOARD_HEIGHT;
+// 1st entry is # of points for clearing 1 line, etc.
+const SCORES_PER_LINE: [u64; 4] = [80, 200, 600, 2400];
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum GameState {
@@ -23,9 +21,10 @@ pub struct Board {
     pub cells: [[u8; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
     pub current_piece: Tetromino, // current active Tetromino
     pub state: GameState,
+    pub score: u64,
 
     // line_counts[i] = # of filled blocks in row i
-    line_counts: [i64; BOARD_HEIGHT as usize] ,
+    line_counts: [i64; BOARD_HEIGHT as usize],
     // for "random bag" generation of the next tetromino
     tetrominos_bag: Vec<Tetromino>
 }
@@ -39,6 +38,7 @@ impl Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
             current_piece: bag.remove(0),
             state: GameState::Playing,
+            score: 0,
 
             line_counts: [0; BOARD_HEIGHT as usize],
             tetrominos_bag: bag
@@ -98,6 +98,8 @@ impl Board {
                         self.state = GameState::Playing;
                         self.line_counts = [0; BOARD_HEIGHT as usize];
                         self.tetrominos_bag = bag;
+                        self.score = 0;
+                        println!("===== GAME RESTARTED =====");
                     }
                     _ => {}
                 }
@@ -136,14 +138,21 @@ impl Board {
             }
         }
 
+        let mut rows_cleared = 0;
         for row in rows_affected.iter() {
             if self.line_counts[*row] == BOARD_WIDTH {
                 self.clear_row(*row);
+                rows_cleared += 1;
             }
+        }
+        if rows_cleared > 0 {
+            self.score += SCORES_PER_LINE[rows_cleared - 1];
         }
     }
 
     pub fn advance_board(&mut self) {
+        // println!("=== SCORE: {:?} ===", self.score);
+
         if self.state != GameState::Playing {
             return
         }
@@ -244,7 +253,6 @@ impl Board {
     pub fn set_piece_on_board(&mut self) {
         let current_x = self.current_piece.x_offset;
         let current_y = self.current_piece.y_offset;
-
         for row in 0..self.current_piece.blocks.len() {
             for col in 0..self.current_piece.blocks[0].len() {
                 if self.current_piece.blocks[row][col] == 1 {
