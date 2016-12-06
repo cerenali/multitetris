@@ -9,17 +9,26 @@ use piston::event_loop::*;
 use piston::input::*;
 use glutin_window::GlutinWindow as Window;
 use opengl_graphics::{ GlGraphics, OpenGL };
+use opengl_graphics::glyph_cache::GlyphCache;
 
 use graphics::*;
+
+use std::path::Path;
+use std::fs::OpenOptions;
+use board::Board;
 
 mod block;
 mod board;
 
-use board::Board;
-
 pub const BLOCK_SIZE: i64 = 30;
 pub const BOARD_WIDTH: i64 = 10; // 10 cells across
 pub const BOARD_HEIGHT: i64 = 22; // 22 cells up n down
+
+pub const NUM_BOARDS: i64 = 2; // number of boards
+
+pub const FONT_SIZE: u32 = 24;
+pub const SCORE_LEFT_MARGIN: f64 = 15.0;
+pub const SCORE_TOP_MARGIN: f64 = 35.0;
 
 pub const BOARD_BKD_COLOR: [f32; 4] = [0.18, 0.18, 0.18, 1.0]; // dark gray
 pub const RED: [f32; 4] = [0.96, 0.12, 0.12, 1.0];
@@ -27,11 +36,10 @@ pub const BLACK: [f32; 4] = [0.0, 0.0, 0.0, 1.0];
 pub const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 pub const BRIGHT_GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 
-pub const NUM_BOARDS: i64 = 2; // number of boards
-
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
     boards: Vec<board::Board>, // the game board
+    cache: GlyphCache<'static> // for drawing text
 }
 
 impl App {
@@ -46,7 +54,6 @@ impl App {
         for (i, board) in &mut self.boards.iter().enumerate() {
             // do nothing if paused
             if board.state == board::GameState::Paused {
-                // return
                 continue
             }
 
@@ -72,8 +79,9 @@ impl App {
             let current_y = board.current_piece.y_offset;
             let piece_color = board.current_piece.color;
 
+            let font_cache = &mut self.cache;
+
             self.gl.draw(args.viewport(), |c, gl| {
-                // draw board???
                 // iterate thru board cells and draw in filled-in blocks
                 for row in 0..cells.len() {
                     for col in 0..cells[0].len() {
@@ -99,14 +107,26 @@ impl App {
                         }
                     }
                 }
+
+
+                // draw score
+                let mut text = graphics::Text::new(FONT_SIZE);
+                text.color = WHITE;
+                let mut transform: graphics::context::Context =
+                            c.trans(SCORE_LEFT_MARGIN + (BLOCK_SIZE as f64) * (BOARD_WIDTH * i as i64) as f64, SCORE_TOP_MARGIN);
+                text.draw(&format!("Score: {}", board.score),
+                          font_cache,
+                          &c.draw_state,
+                          transform.transform,
+                          gl);
             });
+
         }
     }
 
     fn update(&mut self, args: &UpdateArgs) {
         for mut board in &mut self.boards {
             if board.state != board::GameState::Playing {
-                // return
                 continue
             }
             board.advance_board();
@@ -128,6 +148,16 @@ fn main() {
         .build()
         .unwrap();
 
+    let font_path = match OpenOptions::new().read(true).open("Lato-Light.ttf") {
+        Ok(_) => Path::new("Lato-Light.ttf"),
+        Err(_) => {
+            match OpenOptions::new().read(true).open("src/Lato-Light.ttf") {
+                Ok(_) => Path::new("src/Lato-Light.ttf"),
+                Err(_) => panic!("No font file found")
+            }
+        }
+    };
+
     // Create a new game and run it.
     let mut boards: Vec<board::Board> = Vec::new();
     for i in 0..NUM_BOARDS {
@@ -136,6 +166,7 @@ fn main() {
     let mut app = App {
         gl: GlGraphics::new(opengl),
         boards: boards,
+        cache: GlyphCache::new(font_path).unwrap()
     };
 
     let mut events = window.events();
