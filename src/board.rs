@@ -198,7 +198,8 @@ impl Board {
     } else {
       // add piece to board cells
       self.set_piece_on_board();
-
+      self.score += 10;
+      
       // clear line if necessary
       self.clear_line_if_needed();
 
