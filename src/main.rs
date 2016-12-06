@@ -79,6 +79,11 @@ impl App {
             let current_y = board.current_piece.y_offset;
             let piece_color = board.current_piece.color;
 
+            let ghost_blocks = board.ghost_piece.blocks;
+            let ghost_x = board.ghost_piece.x_offset;
+            let ghost_y = board.ghost_piece.y_offset;
+            let ghost_piece_color = board.ghost_piece.color;
+
             let font_cache = &mut self.cache;
 
             self.gl.draw(args.viewport(), |c, gl| {
@@ -104,6 +109,19 @@ impl App {
                             let size: f64 = BLOCK_SIZE as f64;
                             let b = rectangle::square(x * size, y * size, size);
                             rectangle(piece_color, b, c.transform.trans(0.0, 0.0), gl);
+                        }
+                    }
+                }
+
+                // DRAW  G H O S T   P I E C E ?
+                for row in 0..ghost_blocks.len() {
+                    for col in 0..ghost_blocks[0].len() {
+                        if ghost_blocks[row][col] == 1 {
+                            let x: f64 = (col as f64) + ghost_x + (BOARD_WIDTH * i as i64) as f64;
+                            let y: f64 = (row as f64) + ghost_y;
+                            let size: f64 = BLOCK_SIZE as f64;
+                            let b = rectangle::square(x * size, y * size, size);
+                            rectangle(ghost_piece_color, b, c.transform.trans(0.0, 0.0), gl);
                         }
                     }
                 }

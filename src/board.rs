@@ -4,11 +4,14 @@ use rand::Rng;
 
 use super::BOARD_WIDTH;
 use super::BOARD_HEIGHT;
+use super::block::Shape;
 use super::block::Tetromino;
 use super::block::TETROMINOS;
 
 // 1st entry is # of points for clearing 1 line, etc.
 const SCORES_PER_LINE: [u64; 4] = [80, 200, 600, 2400];
+
+const GHOST_PIECE_OPACITY: f32 = 0.35;
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub enum GameState {
@@ -20,6 +23,7 @@ pub enum GameState {
 pub struct Board {
     pub cells: [[u8; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
     pub current_piece: Tetromino, // current active Tetromino
+    pub ghost_piece: Tetromino, // ghost piece to display at bottom
     pub state: GameState,
     pub score: u64,
 
@@ -36,9 +40,19 @@ impl Board {
         let mut bag = TETROMINOS.to_vec();
         ::rand::thread_rng().shuffle(&mut bag);
 
+        let first_piece: Tetromino = bag.remove(0);
+        let mut ghost_piece: Tetromino = first_piece.clone();
+        ghost_piece.y_offset = BOARD_HEIGHT as f64 - ghost_piece.block_height();
+        // some shapes are drawn starting from 2nd, not 1st row in block
+        if ghost_piece.name == Shape::T || ghost_piece.name == Shape::S || ghost_piece.name == Shape::Z {
+            ghost_piece.y_offset -= 1.0;
+        }
+        ghost_piece.color[3] = GHOST_PIECE_OPACITY; // transparent
+
         Board {
             cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
-            current_piece: bag.remove(0),
+            current_piece: first_piece,
+            ghost_piece: ghost_piece,
             state: GameState::Playing,
             score: 0,
 
@@ -55,35 +69,39 @@ impl Board {
                 match but {
                     Button::Keyboard(Key::Up) => {
                         self.current_piece.rotate_right();
-
+                        self.ghost_piece.rotate_right();
                         // undo rotation if it was invalid...lol
                         if self.current_piece_out_of_bounds() {
                             self.current_piece.rotate_left();
+                            self.ghost_piece.rotate_left();
                         }
+                        self.update_ghost_piece();
                     }
                     Button::Keyboard(Key::Left) => {
                         if self.can_move_current_piece_left() {
                             self.current_piece.move_left();
+                            self.update_ghost_piece();
                         }
                     }
                     Button::Keyboard(Key::Right) => {
                         if self.can_move_current_piece_right() {
                             self.current_piece.move_right();
+                            self.update_ghost_piece();
                         }
                     }
                     Button::Keyboard(Key::Down) => {
-                        if self.can_move_current_piece_down() {
+                        if self.can_move_piece_down(&self.current_piece) {
                             self.current_piece.move_down();
                         }
                     }
                     Button::Keyboard(Key::Space) => {
                         // pressing spacebar drops piece to bottom
-                        while self.can_move_current_piece_down() {
+                        while self.can_move_piece_down(&self.current_piece) {
                             self.current_piece.move_down();
                         }
                     }
                     // TODO: these options disabled for multiplayer
-                    
+
                     // P = pause button
                     // Button::Keyboard(Key::P) => {
                     //     if self.state == GameState::Playing {
@@ -172,7 +190,7 @@ impl Board {
         }
 
         // make the existing piece fall
-        if self.can_move_current_piece_down() {
+        if self.can_move_piece_down(&self.current_piece) {
             self.current_piece.move_down();
         } else {
             // add piece to board cells
@@ -183,19 +201,20 @@ impl Board {
 
             // get new piece
             self.current_piece = self.get_next_piece();
+            self.update_ghost_piece();
         }
     }
 
-    fn can_move_current_piece_down(&self) -> bool {
-        if self.current_piece.bottommost() + 1.0 >= BOARD_HEIGHT as f64 {
+    fn can_move_piece_down(&self, piece: &Tetromino) -> bool {
+        if piece.bottommost() + 1.0 >= BOARD_HEIGHT as f64 {
             return false
         }
         // check if piece will intersect with a piece already on the board
-        let current_x = self.current_piece.x_offset;
-        let current_y = self.current_piece.y_offset;
-        for row in 0..self.current_piece.blocks.len() {
-            for col in 0..self.current_piece.blocks[0].len() {
-                if self.current_piece.blocks[row][col] == 1 {
+        let current_x = piece.x_offset;
+        let current_y = piece.y_offset;
+        for row in 0..piece.blocks.len() {
+            for col in 0..piece.blocks[0].len() {
+                if piece.blocks[row][col] == 1 {
                     let board_x: i64 = (col as i64) + (current_x as i64);
                     let board_y: i64 = (row as i64) + (current_y as i64) + 1;
                     if self.cells[board_y as usize][board_x as usize] == 1 {
@@ -277,5 +296,18 @@ impl Board {
             ::rand::thread_rng().shuffle(&mut self.tetrominos_bag);
         }
         self.tetrominos_bag.remove(0)
+    }
+
+    // helper function to update position of ghost piece w/ current piece
+    fn update_ghost_piece(&mut self) {
+        if self.current_piece.name != self.ghost_piece.name {
+            self.ghost_piece = self.current_piece.clone();
+            self.ghost_piece.color[3] = GHOST_PIECE_OPACITY;
+        }
+        self.ghost_piece.y_offset = 0.0;
+        self.ghost_piece.x_offset = self.current_piece.x_offset;
+        while self.can_move_piece_down(&self.ghost_piece) {
+            self.ghost_piece.move_down();
+        }
     }
 }
