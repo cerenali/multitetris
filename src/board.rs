@@ -78,29 +78,31 @@ impl Board {
                             self.current_piece.move_down();
                         }
                     }
+                    // TODO: these options disabled for multiplayer
+                    
                     // P = pause button
-                    Button::Keyboard(Key::P) => {
-                        if self.state == GameState::Playing {
-                            self.state = GameState::Paused;
-                        } else if self.state == GameState::Paused {
-                            self.state = GameState::Playing;
-                        }
-                    }
-                    // R = restart button
-                    // TODO: disabled for multiplayer
-                    Button::Keyboard(Key::R) => {
-                        // reset all game variables
-                        let mut bag = TETROMINOS.to_vec();
-                        ::rand::thread_rng().shuffle(&mut bag);
+                    // Button::Keyboard(Key::P) => {
+                    //     if self.state == GameState::Playing {
+                    //         self.state = GameState::Paused;
+                    //     } else if self.state == GameState::Paused {
+                    //         self.state = GameState::Playing;
+                    //     }
+                    // }
 
-                        self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
-                        self.current_piece = bag.remove(0);
-                        self.state = GameState::Playing;
-                        self.line_counts = [0; BOARD_HEIGHT as usize];
-                        self.tetrominos_bag = bag;
-                        self.score = 0;
-                        println!("===== GAME RESTARTED =====");
-                    }
+                    // R = restart button
+                    // Button::Keyboard(Key::R) => {
+                    //     // reset all game variables
+                    //     let mut bag = TETROMINOS.to_vec();
+                    //     ::rand::thread_rng().shuffle(&mut bag);
+
+                    //     self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
+                    //     self.current_piece = bag.remove(0);
+                    //     self.state = GameState::Playing;
+                    //     self.line_counts = [0; BOARD_HEIGHT as usize];
+                    //     self.tetrominos_bag = bag;
+                    //     self.score = 0;
+                    //     println!("===== GAME RESTARTED =====");
+                    // }
                     _ => {}
                 }
             }
