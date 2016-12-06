@@ -158,11 +158,10 @@ impl App {
                     }
                 }
 
-
                 // draw score
                 let mut text = graphics::Text::new(FONT_SIZE);
                 text.color = WHITE;
-                let mut transform: graphics::context::Context =
+                let transform: graphics::context::Context =
                             c.trans(SCORE_LEFT_MARGIN + (BLOCK_SIZE as f64) * (BOARD_WIDTH * i as i64) as f64, SCORE_TOP_MARGIN);
                 text.draw(&format!("Score: {}", board.score),
                           font_cache,
