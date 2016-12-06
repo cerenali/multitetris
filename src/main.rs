@@ -119,6 +119,16 @@ impl App {
                           &c.draw_state,
                           transform.transform,
                           gl);
+
+                // draw border
+                let rect_border = graphics::Rectangle::new_border(WHITE, 0.3);
+                rect_border.draw([(BOARD_WIDTH * BLOCK_SIZE) as f64 * i as f64,
+                                 0.0,
+                                 (BOARD_WIDTH * BLOCK_SIZE) as f64,
+                                 (BOARD_HEIGHT * BLOCK_SIZE) as f64],
+                    &c.draw_state,
+                    c.transform,
+                    gl);
             });
 
         }
