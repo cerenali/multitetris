@@ -206,23 +206,17 @@ impl App {
 
 fn main() {
   let url = Url::parse("ws://127.0.0.1:3012").unwrap();
-
   println!("Connecting to {}", url);
 
   let request = Client::connect(url).unwrap();
-
   let response = request.send().unwrap(); // Send the request and retrieve a response
-
   println!("Validating response...");
 
   response.validate().unwrap(); // Validate the response
-
   println!("Successfully connected");
 
   let mut token = 0;
-
   let (mut sender, mut receiver) = response.begin().split();
-
   let (tx, rx) = channel();
 
   let tx_1 = tx.clone();
@@ -234,7 +228,7 @@ fn main() {
       let message: Message = match rx.recv() {
         Ok(m) => m,
         Err(e) => {
-          println!("Send Loop: {:?}", e);
+          println!("Error: Send Loop: {:?}", e);
           return;
         }
       };
@@ -250,7 +244,7 @@ fn main() {
       match sender.send_message(&message) {
         Ok(()) => (),
         Err(e) => {
-          println!("Send Loop: {:?}", e);
+          println!("Error: Send Loop: {:?}", e);
           let _ = sender.send_message(&Message::close());
           return;
         }
@@ -266,7 +260,7 @@ fn main() {
       let message: Message = match message {
         Ok(m) => m,
         Err(e) => {
-          println!("Receive Loop: {:?}", e);
+          println!("Error: Receive Loop: {:?}", e);
           let _ = tx_1.send(Message::close());
           return;
         }
@@ -281,7 +275,7 @@ fn main() {
           // Send a pong in response
           Ok(()) => (),
           Err(e) => {
-            println!("Receive Loop: {:?}", e);
+            println!("Error: Receive Loop: {:?}", e);
             return;
           }
         },
@@ -317,7 +311,7 @@ fn main() {
 
   // Create a new game and run it.
   let mut boards: Vec<board::Board> = Vec::new();
-  for i in 0..NUM_BOARDS { // TODO: update num_boards from server
+  for i in 0..NUM_BOARDS {
     boards.push(Board::init_board());
   }
 
@@ -345,13 +339,11 @@ fn main() {
               app.token = token;
               println!("Joined game as Player {}!\n", app.token);
               tx_2.send(Message::text(format!("CLIENT_ACK {}", token_val)));
-              // TODO: add game boards for previously connect players
-            } else{
-              // TODO: add game board to other_boards vec for new player
             }
           },
           "START!" => {
             println!("START!\n");
+            tx_2.send(Message::text(format!("FIRST_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].current_piece.name)));
             break;
           },
           _ => { }
@@ -362,9 +354,95 @@ fn main() {
   };
 
   let mut events = window.events().ups(5);
-  while let Some(e) = events.next(&mut window) { 
+  while let Some(e) = events.next(&mut window) {
+    // handle commands from the server
+    loop {
+      match rx1.try_recv() {
+        Ok(msg) => {
+          let message = String::from_utf8(msg.payload.into_owned()).unwrap();
+          match message.as_str() {
+            "" => {
+              continue;
+            },
+            _ => { }
+          };
+          let mut split_msg = message.split_whitespace();
+          let command = split_msg.next().unwrap();
+          match command {
+            "KEYSTROKE" => {
+              let client_num_str = split_msg.next().unwrap();
+              let client_num = client_num_str.parse::<i32>().unwrap();
+              if client_num != app.token {
+                let keystroke_str = split_msg.next().unwrap();
+                // update board for client number client_num
+                let mut input_keystroke: Input = match keystroke_str {
+                  "UP" => Input::Press(Button::Keyboard(Key::Up)),
+                  "DOWN" => Input::Press(Button::Keyboard(Key::Down)),
+                  "LEFT" => Input::Press(Button::Keyboard(Key::Left)),
+                  "RIGHT" => Input::Press(Button::Keyboard(Key::Right)),
+                  "SPACE" => Input::Press(Button::Keyboard(Key::Space)),
+                  _ => Input::Press(Button::Keyboard(Key::A))
+                };
+                app.boards[(client_num - 1) as usize].handle_key_press(&input_keystroke);
+              }
+            },
+            "FIRST_BLOCK" => {
+              let client_num_str = split_msg.next().unwrap();
+              let client_num = client_num_str.parse::<i32>().unwrap();
+              if client_num != app.token {
+                let new_block_str = split_msg.next().unwrap();
+                let new_block = match new_block_str {
+                  "I" => TETROMINOS[0],
+                  "O" => TETROMINOS[1],
+                  "T" => TETROMINOS[2],
+                  "S" => TETROMINOS[3],
+                  "Z" => TETROMINOS[4],
+                  "J" => TETROMINOS[5],
+                  "L" => TETROMINOS[6],
+                  _ => TETROMINOS[0]
+                };
+                app.boards[(client_num - 1) as usize].current_piece = new_block;
+                app.boards[(client_num - 1) as usize].update_ghost_piece();
+              }
+            },
+            "NEW_BLOCK" => {
+              let client_num_str = split_msg.next().unwrap();
+              let client_num = client_num_str.parse::<i32>().unwrap();
+              if client_num != app.token {
+                let new_block_str = split_msg.next().unwrap();
+                let new_block = match new_block_str {
+                  "I" => TETROMINOS[0],
+                  "O" => TETROMINOS[1],
+                  "T" => TETROMINOS[2],
+                  "S" => TETROMINOS[3],
+                  "Z" => TETROMINOS[4],
+                  "J" => TETROMINOS[5],
+                  "L" => TETROMINOS[6],
+                  _ => TETROMINOS[0]
+                };
+                app.boards[(client_num - 1) as usize].next_piece = new_block;
+                app.boards[(client_num - 1) as usize].update_ghost_piece();
+              }
+            },
+            "GAME_OVER" => {
+              let winner_num_str = split_msg.next().unwrap();
+              let winner_num = winner_num_str.parse::<i32>().unwrap();
+              println!("==== GAME OVER ====\n WINNER: PLAYER {}, SCORE: {}", winner_num,
+                       app.boards[(winner_num - 1) as usize].score);
+              // process::exit(0);
+            },
+            _ => {
+              //println!("Unknown command\n");
+            }
+          }
+        },
+        _ => {
+          break;
+        }
+      };
+    }
+    
     //   handle keystroke in board
-    //   
     if let Some(r) = e.render_args() {
       app.render(&r);
     }
@@ -372,10 +450,10 @@ fn main() {
     if let Some(u) = e.update_args() {
       if app.boards[(app.token - 1) as usize].new_block {
         // send new block message
-        match tx.send(Message::text(format!("NEW_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].current_piece.name))) { 
+        match tx.send(Message::text(format!("NEW_BLOCK {} {:?}", app.token, app.boards[(app.token - 1) as usize].next_piece.name))) { 
           Ok(()) => (),
           Err(e) => {
-            println!("Main Loop: {:?}", e);
+            println!("Error: Main Loop: {:?}", e);
             break;
           }
         }
@@ -414,94 +492,11 @@ fn main() {
         match tx.send(Message::text(format!("KEYSTROKE {} {}", app.token, keystroke))) { 
           Ok(()) => (),
           Err(e) => {
-            println!("Main Loop: {:?}", e);
+            println!("Error: Main Loop: {:?}", e);
             break;
           }
         }
       }
-    }
-    
-    // handle commands from the server
-    loop {
-      match rx1.try_recv() {
-        Ok(msg) => {
-          let message = String::from_utf8(msg.payload.into_owned()).unwrap();
-          match message.as_str() {
-            "" => {
-              continue;
-            },
-            _ => { }
-          };
-          let mut split_msg = message.split_whitespace();
-          let command = split_msg.next().unwrap();
-          match command {
-            "KEYSTROKE" => {
-              let client_num_str = split_msg.next().unwrap();
-              let client_num = client_num_str.parse::<i32>().unwrap();
-              if client_num != app.token {
-                let keystroke_str = split_msg.next().unwrap();
-                // update board for client number client_num
-                let mut input_keystroke: Input = match keystroke_str {
-                  "UP" => Input::Press(Button::Keyboard(Key::Up)),
-                  "DOWN" => Input::Press(Button::Keyboard(Key::Down)),
-                  "LEFT" => Input::Press(Button::Keyboard(Key::Left)),
-                  "RIGHT" => Input::Press(Button::Keyboard(Key::Right)),
-                  "SPACE" => Input::Press(Button::Keyboard(Key::Space)),
-                  _ => Input::Press(Button::Keyboard(Key::A))
-                };
-                app.boards[(client_num - 1) as usize].handle_key_press(&input_keystroke);
-              }
-            },
-            "NEW_BLOCK" => {
-              let client_num_str = split_msg.next().unwrap();
-              let client_num = client_num_str.parse::<i32>().unwrap();
-              if client_num != app.token {
-                let new_block_str = split_msg.next().unwrap();
-                // TODO: update new piece for client client_num
-                let new_block = match new_block_str {
-                  "I" => TETROMINOS[0],
-                  "O" => TETROMINOS[1],
-                  "T" => TETROMINOS[2],
-                  "S" => TETROMINOS[3],
-                  "Z" => TETROMINOS[4],
-                  "J" => TETROMINOS[5],
-                  "L" => TETROMINOS[6],
-                  _ => TETROMINOS[0]
-                };
-                app.boards[(client_num - 1) as usize].current_piece = new_block;
-                app.boards[(client_num - 1) as usize].update_ghost_piece();
-              }
-            },
-            "SCORE_UPDATE" => {
-              let client_num_str = split_msg.next().unwrap();
-              let client_num = client_num_str.parse::<i32>().unwrap();
-              if client_num != app.token {
-                // TODO: update score for client client_num
-              }
-            },
-            "PLAYER_LOST" => {
-              let client_num_str = split_msg.next().unwrap();
-              let client_num = client_num_str.parse::<i32>().unwrap();
-              if client_num != app.token {
-                // TODO: update game for client client_num to stop
-              }
-            },
-            "GAME_OVER" => {
-              let winner_num_str = split_msg.next().unwrap();
-              let winner_num = winner_num_str.parse::<i32>().unwrap();
-              // TODO: announce winner, exit game?
-              println!("==== GAME OVER ; WINNER: PLAYER {}", winner_num);
-              // process::exit(0);
-            },
-            _ => {
-              println!("Unknown command\n");
-            }
-          }
-        },
-        _ => {
-          break;
-        }
-      };
     }
     // check for game over; if game over then send GAME OVER msg
     let mut num_ended_games = 0;
@@ -522,19 +517,15 @@ fn main() {
       match tx.send(Message::text(format!("GAME_OVER {}", app.winner))) { 
         Ok(()) => (),
         Err(e) => {
-          println!("Main Loop: {:?}", e);
+          println!("Error: Main Loop: {:?}", e);
           break;
         }
       }
     }
   }
 
-  // We're exiting
-
+  // Exiting
   let _ = send_loop.join();
   let _ = receive_loop.join();
-
-  println!("Exited");
-
 }
 

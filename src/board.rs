@@ -24,6 +24,7 @@ pub struct Board {
   pub cells: [[u8; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
   pub current_piece: Tetromino, // current active Tetromino
   pub ghost_piece: Tetromino, // ghost piece to display at bottom
+  pub next_piece: Tetromino,
   pub state: GameState,
   pub score: u64,
 
@@ -42,6 +43,7 @@ impl Board {
     ::rand::thread_rng().shuffle(&mut bag);
 
     let first_piece: Tetromino = bag.remove(0);
+    let next_piece: Tetromino = bag.remove(0);
     let mut ghost_piece: Tetromino = first_piece.clone();
     ghost_piece.y_offset = BOARD_HEIGHT as f64 - ghost_piece.block_height();
     // some shapes are drawn starting from 2nd, not 1st row in block
@@ -54,6 +56,7 @@ impl Board {
       cells: [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize],
       current_piece: first_piece,
       ghost_piece: ghost_piece,
+      next_piece: next_piece,
       state: GameState::Playing,
       score: 0,
 
@@ -102,31 +105,6 @@ impl Board {
               self.current_piece.move_down();
             }
           }
-          // TODO: these options disabled for multiplayer
-
-          // P = pause button
-          // Button::Keyboard(Key::P) => {
-          //     if self.state == GameState::Playing {
-          //         self.state = GameState::Paused;
-          //     } else if self.state == GameState::Paused {
-          //         self.state = GameState::Playing;
-          //     }
-          // }
-
-          // R = restart button
-          // Button::Keyboard(Key::R) => {
-          //     // reset all game variables
-          //     let mut bag = TETROMINOS.to_vec();
-          //     ::rand::thread_rng().shuffle(&mut bag);
-
-          //     self.cells = [[0; BOARD_WIDTH as usize]; BOARD_HEIGHT as usize];
-          //     self.current_piece = bag.remove(0);
-          //     self.state = GameState::Playing;
-          //     self.line_counts = [0; BOARD_HEIGHT as usize];
-          //     self.tetrominos_bag = bag;
-          //     self.score = 0;
-          //     println!("===== GAME RESTARTED =====");
-          // }
           _ => {}
         }
       }
@@ -177,8 +155,6 @@ impl Board {
   }
 
   pub fn advance_board(&mut self) {
-    // println!("=== SCORE: {:?} ===", self.score);
-
     if self.state != GameState::Playing {
       return
     }
@@ -204,7 +180,8 @@ impl Board {
       self.clear_line_if_needed();
 
       // get new piece
-      self.current_piece = self.get_next_piece();
+      self.current_piece = self.next_piece;
+      self.next_piece = self.get_next_piece();
       self.new_block = true;
       self.update_ghost_piece();
     }
