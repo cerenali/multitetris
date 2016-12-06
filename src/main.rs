@@ -41,7 +41,7 @@ const WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
 pub struct App {
     gl: GlGraphics, // OpenGL drawing backend.
-    boards: Vec<board::Board>, // the game board
+    boards: Vec<board::Board>, // game boards
     cache: GlyphCache<'static> // for drawing text
 }
 
@@ -52,7 +52,6 @@ impl App {
             // Clear the screen.
             clear(BOARD_BKD_COLOR, gl);
         });
-
 
         for (i, board) in &mut self.boards.iter().enumerate() {
             // do nothing if paused
@@ -219,7 +218,7 @@ fn main() {
 
     // Create a new game and run it.
     let mut boards: Vec<board::Board> = Vec::new();
-    for i in 0..NUM_BOARDS {
+    for i in 0..NUM_BOARDS { // TODO: update num_boards from server
         boards.push(Board::init_board());
     }
     let mut app = App {
@@ -244,6 +243,13 @@ fn main() {
             for board in &mut app.boards {
                 board.handle_key_press(&i);
             }
+            // TODO: send new keystroke to server
+
+            // TODO: send messages:
+            // new block name
+            // keystroke
+            // new score
+            // GameState
         }
     }
 }
